@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "fhenix-fhe": {
+      "source": "imajus/fhenix-skill",
+      "sourceType": "github",
+      "computedHash": "201760ed5e21b629b6dceb88481ece8914424a6b9df76aef4e636b2fb33d5ba0"
+    }
+  }
+}
