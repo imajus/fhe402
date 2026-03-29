@@ -22,7 +22,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an "Ac
 ## 5. Key Features
 
 * **Programmable On-Chain SLAs:** Vendors can enforce complex rules (e.g., "only allow requests if the user has a specific reputation score") without revealing the user's data or the vendor's internal criteria.
-* **Automated Resale Market:** Owners can "prorate" their API access. If an owner has 50% of their monthly quota left, the system allows them to sell that remaining access to an agent automatically.
+* **Automated Resale Market (Future):** Owners can "prorate" their API access. If an owner has 50% of their monthly quota left, the system allows them to sell that remaining access to an agent automatically. *(The cryptographic design for homomorphic rate-limit subdivision and double-spend prevention is an open problem — this feature is scoped for a future version.)*
 * **Confidential Governance:** DAO treasuries or organizations can manage their service subscriptions and payments privately, hiding their operating costs from competitors.
 * **One-Step Agentic Payments:** Replaces the multi-step "402" flow. The payment and the access proof are bundled into a single encrypted token delivery.
 
@@ -49,7 +49,7 @@ sequenceDiagram
 ## 7. System Requirements
 
 ### 7.1 Functional Requirements
-* **Issuance:** The system must generate tokens that are bound to a specific intent or request to prevent replay attacks.
+* **Issuance:** The system must generate session tokens with a configurable TTL. Replay protection is achieved via random nonces and vendor-side nonce tracking, not per-request intent binding (which would require a new FHE derivation per API call).
 * **Compliance:** The system must support compound checks (e.g., age, location, accreditation) on encrypted identity data before issuing a token.
 * **Interoperability:** The "Access Token" must be deliverable via standard HTTP headers (e.g., Authorization: Bearer).
 * **Vendor Autonomy:** Vendors must be able to validate tokens off-chain instantly without waiting for blockchain confirmations for every request.
@@ -58,7 +58,7 @@ sequenceDiagram
 
 * **Privacy:** Neither the AI agent, the model provider, nor any blockchain observer should be able to see the "Master Key" or the contents of the "Access Token".
 * **Scalability:** Token issuance must be handled by an off-chain coprocessor to ensure the network can handle high-frequency agentic requests.
-* **Durability:** The underlying cryptography must be resistant to future quantum computing threats.
+* **Durability:** The FHE layer's lattice-based cryptography is resistant to future quantum computing threats. The broader system (Ethereum ECDSA, EigenLayer) inherits the quantum-resistance posture of the underlying L1/L2 infrastructure.
 
 ## 8. Out of Scope
 
