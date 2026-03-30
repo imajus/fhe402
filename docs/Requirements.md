@@ -46,39 +46,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 ## High-Level Workflow
 
-### PoC Flow (Current Implementation)
-
-```
-Service Vendor:
-  Generate Km locally
-  Encrypt Km with FHE → upload to Fhenix smart contract
-  Set SLA rules: price, TTL, rate limits, compliance checks
-  [Vendor can go partially offline - still needs to issue keys in PoC]
-
-AI Agent / Buyer:
-  Pay USDC to smart contract
-  Contract verifies payment, checks SLA compliance rules
-  Contract emits KeyIssued event
-
-Vendor Server (PoC - online):
-  Detect KeyIssued event
-  Decrypt Km locally (only vendor can)
-  Compute dk = HMAC-SHA256(Km, wallet || nonce || max_uses || expiry)
-  Deliver dk to buyer over encrypted channel
-
-AI Agent:
-  Receive dk
-  Include in Authorization: Bearer header on every API request
-  Send request to vendor API
-
-Vendor:
-  Recompute HMAC locally to validate (offline, <1ms)
-  Check expiry timestamp
-  Check nonce against seen-nonce set
-  If valid: serve response to agent
-```
-
-### Target Flow (Full Architecture - Vendor Fully Offline)
+### Target Flow
 
 ```mermaid
 sequenceDiagram
@@ -122,7 +90,6 @@ sequenceDiagram
 **Scalability:** Token issuance in the target architecture is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests. In the PoC, issuance is handled by the vendor server.
 
 **Latency:** HMAC validation is under 1ms. Total request overhead is dominated by network round-trip.
-
 
 ## Out of Scope
 
