@@ -14,32 +14,6 @@ The system follows the **"Glue and Coprocessor"** model, where the EVM-compatibl
 
 **Vendor Marketplace:** An on-chain registry where vendors list their APIs, pricing tiers, and access rules. Buyers discover vendors, compare offerings, and purchase access in a single transaction. The marketplace is non-custodial - funds flow directly from buyer to smart contract, with automatic distribution to vendors and nodes.
 
-### Comparison with Existing Solutions
-
-| Property | Traditional API keys | OAuth 2.0 | FHE402 |
-|---|---|---|---|
-| Rules enforcement | Vendor database | Auth server | Cryptography |
-| Master secret location | Vendor server | Auth server | FHE on-chain |
-| Key binding | None (bearer) | User session | Wallet identity |
-| Validation | Network call to vendor | Network call to auth server | Local HMAC (offline) |
-| Single point of failure | Vendor server | Auth server | None |
-| Auditable issuance | No | No | On-chain commitments |
-| Post-quantum confidentiality | No | No | Yes (lattice-based FHE) |
-
-### Threat Model
-
-The FHE layer's primary security goal is **vendor infrastructure elimination**: vendors deposit their master key ($K_m$) on-chain in encrypted form and the contract computes access tokens homomorphically, removing the need for vendors to operate a dedicated signing/token-issuance server. The vendor retains knowledge of $K_m$ (they generated it) and uses it for off-chain validation. FHE does **not** protect $K_m$ from the vendor - it protects $K_m$ from all other parties (agents, blockchain observers, other contracts) and enables trustless, non-interactive token issuance without vendor availability.
-
-In other words: the vendor could run a signing service themselves, but the FHE layer means they don't have to. Token issuance happens on-chain 24/7 without vendor uptime, while the key remains confidential to everyone except its owner.
-
-Threats addressed:
-
-- **Credential theft at rest:** FHE encryption means the master key has no plaintext representation anywhere on-chain. A full database dump of the blockchain reveals nothing.
-- **Credential theft in transit:** Key delivery via TSN re-encryption means the derived key is wrapped specifically for the buyer's public key. Only the buyer's private key can unwrap it.
-- **Replay attacks:** Random nonces in every token prevent replaying a captured valid request. The vendor maintains a seen-nonce set evicted after TTL expiry.
-- **Over-issuance:** On-chain rate limit enforcement at issuance time prevents a compromised vendor server from issuing unlimited tokens.
-- **Threats not addressed:** Compromise of the vendor's own machine (they hold $K_m$). Compromise of more than N/2 TSN nodes simultaneously. Quantum attacks on the ECDSA layer (EigenLayer, Ethereum itself).
-
 ## Cryptographic Stack
 
 The FHE layer of the ASM protocol utilizes lattice-based cryptography, which is inherently **post-quantum secure**. Note that the end-to-end system also relies on Ethereum (ECDSA) and EigenLayer infrastructure, which are not post-quantum resistant. The post-quantum property applies specifically to the confidentiality of encrypted on-chain state.

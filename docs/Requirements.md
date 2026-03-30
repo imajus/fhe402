@@ -24,6 +24,33 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 - An organization can delegate API access to agents without sharing credentials with the agent developer
 - Token issuance and usage counts are recorded on-chain, enabling independent verification that access was granted and how many times a token was consumed - without exposing the underlying key
 
+## Comparison with Existing Solutions
+
+| Property | Traditional API keys | OAuth 2.0 | x402 | FHE402 |
+|---|---|---|---|---|
+| Rules enforcement | Vendor database | Auth server | Payment processor | Cryptography |
+| Master secret location | Vendor server | Auth server | Vendor server | FHE on-chain |
+| Key binding | None (bearer) | User session | None (bearer) | Wallet identity |
+| Validation | Network call to vendor | Network call to auth server | Network call to payment processor | Local HMAC (offline) |
+| Single point of failure | Vendor server | Auth server | Payment processor | None |
+| Auditable issuance | No | No | Partial (payment records) | On-chain commitments |
+| Post-quantum confidentiality | No | No | No | Yes (lattice-based FHE) |
+
+## Threat Model
+
+The system's primary security goal is **vendor infrastructure elimination**: vendors deposit their master key on-chain in encrypted form and the contract issues access tokens without vendor involvement. FHE protects the master key from all parties except the vendor — agents, blockchain observers, and other contracts cannot recover it. Token issuance operates 24/7 without vendor uptime.
+
+**Threats addressed:**
+- **Credential theft at rest:** The master key has no plaintext representation on-chain.
+- **Credential theft in transit:** Derived keys are wrapped specifically for the buyer's wallet — only they can unwrap them.
+- **Replay attacks:** Random nonces in every token, tracked by the vendor per TTL window.
+- **Over-issuance:** On-chain rate limits enforced at issuance time prevent unlimited token generation.
+
+**Threats not addressed:**
+- Compromise of the vendor's own systems (they hold the master key).
+- Compromise of a majority of threshold network nodes simultaneously.
+- Quantum attacks on the wallet signature layer (Ethereum ECDSA).
+
 ## User Roles
 
 **Service Vendors:** Companies or individuals who provide APIs or services. They generate a master key locally, encrypt it via FHE, and deposit it on-chain once. They define pricing, rate limits, TTL windows, and compliance rules in the smart contract. After initial provisioning, vendors do not need to operate any infrastructure for token issuance - the blockchain handles it. Vendors do operate an API endpoint and they run a lightweight validation process for incoming requests.
