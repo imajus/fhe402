@@ -42,7 +42,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **AI Agents:** Autonomous software processes acting on behalf of users. They can purchase Access Tokens by interacting directly with smart contract, include them in HTTP request, and receive API responses. They are cryptographically blind to the credential while being able to use it.
 
-**DePIN Node Operators:** Independent infrastructure operators who run validator proxy nodes. They stake USDC collateral, validate incoming Access Tokens via local HMAC recomputation, forward valid requests to vendor API endpoints, return responses to agents, and earn per-request fees. They are the decentralized replacement for a vendor-operated API gateway. They cannot read master keys or token contents - they only verify that the derived key's HMAC is valid.
+**DePIN Node Operators:** Independent infrastructure operators who run validator proxy nodes. They stake collateral, validate incoming Access Tokens via local HMAC recomputation, forward valid requests to vendor API endpoints, return responses to agents, and earn per-request fees. They are the decentralized replacement for a vendor-operated API gateway. They cannot read master keys or token contents - they only verify that the derived key's HMAC is valid.
 
 ---
 
