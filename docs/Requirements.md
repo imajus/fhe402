@@ -1,3 +1,4 @@
+
 ## 1. Elaborated Requirements.md
 
 ---
@@ -110,13 +111,14 @@ sequenceDiagram
     participant D as DePIN Node
     
     V->>BC: Provision Master Key & Set SLA Rules
-    Note over BC: Master Key stored in Shared Private State
+    Note over BC: Master Key stored in Shared Private State (FHE)
     
     A->>BC: Purchase Access / Request Token
     BC->>BC: Verify Payment & Check SLA Rules (on-chain)
-    BC->>BC: Homomorphic MAC(Master Key, Payload) → Encrypted Token
-    BC->>TSN: Request re-encryption for Agent's public key
-    TSN->>A: Deliver Access Token (AES-GCM, only agent can unwrap)
+    BC-->>V: Emit KeyIssued event
+    
+    V->>V: Compute dk = HMAC(Master Key, Payload) (off-chain)
+    V->>A: Deliver Access Token (dk)
     
     A->>D: API Request + Access Token
     D->>D: Local HMAC validation (offline)
