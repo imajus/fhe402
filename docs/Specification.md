@@ -84,7 +84,7 @@ This commitment proves a key was legitimately issued without revealing the key. 
 
 ## 3. Data Flow: The "Blind Courier" Protocol
 
-The analogy: a sealed envelope. A courier can carry and deliver a sealed envelope. They can prove they have it. They can hand it over. But they cannot read what's inside. The recipient (vendor) opens it and validates the contents. The courier (agent) never learns the secret.
+The analogy: The agent receives an Access Token containing structured data (identity, expiry, limits) plus an HMAC tag computed from the vendor's master key. The agent can present this token to prove permission, but cannot forge a new valid token or recover the master key from the tag. This is analogous to a notary's signature: it proves the legitimacy and authorization of a document without revealing the private key that produced it.
 
 This property is enforced not by policy ("we promise not to show agents the keys") but by cryptography. The token is encrypted under the vendor's public key via the Threshold Services Network. No amount of inspection, memory reading, or model introspection allows the agent to recover the plaintext key. The math makes it impossible.
 
