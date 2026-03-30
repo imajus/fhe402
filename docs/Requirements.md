@@ -41,7 +41,7 @@ This property is enforced not by policy ("we promise not to show agents the keys
 
 ## 4. User Roles
 
-**Service Vendors:** Companies or individuals who provide APIs or services. They generate a master key ($K_m$) locally, encrypt it via FHE, and deposit it on-chain once. They define pricing, rate limits, TTL windows, and compliance rules in the smart contract. After initial provisioning, vendors do not need to operate any infrastructure for token issuance - the blockchain handles it. Vendors do operate an API endpoint that DePIN nodes forward to, and they run a lightweight validation process for incoming requests.
+**Service Vendors:** Companies or individuals who provide APIs or services. They generate a master key locally, encrypt it via FHE, and deposit it on-chain once. They define pricing, rate limits, TTL windows, and compliance rules in the smart contract. After initial provisioning, vendors do not need to operate any infrastructure for token issuance - the blockchain handles it. Vendors do operate an API endpoint and they run a lightweight validation process for incoming requests.
 
 **Resource Owners (Users):** Individuals or organizations that purchase API access. They pay USDC to the smart contract and receive an Access Token bound to their wallet. They can use this token directly or delegate it to AI agents. In the future resale market, they can list unused quota for automated resale - for example, selling the remaining 40% of a monthly API subscription to other buyers without ever exposing the underlying credential.
 
