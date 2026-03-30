@@ -112,7 +112,7 @@ sequenceDiagram
     V->>BC: Provision Master Key & Set SLA Rules
     Note over BC: Master Key stored in Shared Private State
     
-    A->>BC: Purchase Access (USDC) / Request Token
+    A->>BC: Purchase Access / Request Token
     BC->>BC: Verify Payment & Check SLA Rules (on-chain)
     BC->>BC: Homomorphic MAC(Km, Payload) → Encrypted Token
     BC->>TSN: Request re-encryption for Agent's public key
