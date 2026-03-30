@@ -1,18 +1,11 @@
-
-## 1. Elaborated Requirements.md
-
----
-
-## 1. Project Overview
+## Project Overview
 
 The **Agentic Secret Management (ASM)** system is a decentralized infrastructure designed to allow AI agents to use sensitive API credentials and perform paid actions without ever "seeing" the actual secrets. By leveraging **shared private state** on-chain via Fully Homomorphic Encryption (FHE), the system enables a secondary market for API access, programmable service-level agreements (SLAs), and cryptographically secure "blind" execution.
 
 The system is built on two interlocking primitives: FHE for credential confidentiality and HMAC for offline token validation. Together these replace the trust assumptions of traditional API key management - vendor 
 honesty and centralized enforcement - with cryptographic guarantees around credential usage and request validity. Operational guarantees such as uptime and SLA enforcement are outside the scope of this system.
 
----
-
-## 2. Problem Statement
+## Problem Statement
 
 **Credential Leakage:** AI agents currently require plaintext secrets to call external APIs. These secrets pass through model context windows, chat logs, and memory systems - all of which are potential leak surfaces. A single model provider breach, a careless prompt export, or a training data inclusion can expose every credential an agent has ever handled. There is no cryptographic mechanism today that allows an agent to use a credential it cannot read.
 
@@ -20,9 +13,7 @@ honesty and centralized enforcement - with cryptographic guarantees around crede
 
 **Payment Friction:** Existing agentic payment protocols (like x402) require multiple round-trips between agent, payment processor, and vendor before a request is served. This adds latency, complexity, and additional trusted intermediaries. For high-frequency agentic workloads - where an agent may make thousands of API calls per hour - this overhead is unacceptable.
 
----
-
-## 3. The Solution: The "Blind Courier" Model
+## The Solution: The "Blind Courier" Model
 
 The system treats the AI agent as a **Blind Courier**. The agent receives an Access Token that is encrypted specifically for the Service Vendor. The agent can pass this token to the Vendor to prove it has permission to use a service, but the agent itself cannot decrypt the token to see the underlying secret.
 
@@ -33,9 +24,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 - An organization can delegate API access to agents without sharing credentials with the agent developer
 - Token issuance and usage counts are recorded on-chain, enabling independent verification that access was granted and how many times a token was consumed - without exposing the underlying key
 
----
-
-## 4. User Roles
+## User Roles
 
 **Service Vendors:** Companies or individuals who provide APIs or services. They generate a master key locally, encrypt it via FHE, and deposit it on-chain once. They define pricing, rate limits, TTL windows, and compliance rules in the smart contract. After initial provisioning, vendors do not need to operate any infrastructure for token issuance - the blockchain handles it. Vendors do operate an API endpoint and they run a lightweight validation process for incoming requests.
 
@@ -45,15 +34,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **DePIN Node Operators:** Independent infrastructure operators who run validator proxy nodes. They stake collateral, validate incoming Access Tokens via local HMAC recomputation, forward valid requests to vendor API endpoints, return responses to agents, and earn per-request fees. They are the decentralized replacement for a vendor-operated API gateway. They cannot read master keys or token contents - they only verify that the derived key's HMAC is valid.
 
----
-
-## 5. Key Features
-
-- **One-Step Agentic Payments:** Payment and access proof are bundled into a single token issuance, eliminating per-request payment overhead.(Probably usage of x402 payment protocol)
-
-- **Programmable On-Chain SLAs:** Vendors can enforce complex rules without revealing user data or internal criteria. These rules operate on encrypted inputs (e.g., attestations or on-chain data) using FHE and produce a yes/no result without exposing private data.
-
-- **Wallet-Bound Token Issuance:** Each derived key includes the buyer’s Ethereum wallet address as an input to the HMAC function. During API requests, the client must provide both the token and a valid wallet signature. The DePIN node verifies the signature to confirm wallet ownership and recomputes the HMAC to validate the token. This ensures the token cannot be used without control of the corresponding wallet, replacing bearer-token semantics with identity-bound access.
+## Key Features
 
 **Wallet-Bound Token Issuance:** Every derived key is cryptographically bound to the buyer's Ethereum wallet address - it is an explicit input to the HMAC function. A key derived for wallet `0xABC...` cannot be used from wallet `0xDEF...`. This replaces bearer-token semantics (anyone who has the key can use it) with identity-bound semantics (only the specified wallet can produce a valid key).
 
@@ -65,11 +46,9 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **Full On-Chain Audit Trail:** Every token issuance is recorded on-chain as a keccak256 commitment. DePIN node usage reports are aggregated off-chain and submitted in batched Merkle proofs, recording cumulative consumption per token. The result is a tamper-evident record of issuance and usage counts - independently verifiable by any party - without revealing the underlying credentials or the content of individual requests.
 
----
+## High-Level Workflow
 
-## 6. High-Level Workflow
-
-### 6.1 PoC Flow (Current Implementation)
+### PoC Flow (Current Implementation)
 
 ```
 Service Vendor:
@@ -104,7 +83,7 @@ DePIN Node:
   Submit usage report to chain, earn USDC fee
 ```
 
-### 6.2 Target Flow (Full Architecture - Vendor Fully Offline)
+### Target Flow (Full Architecture - Vendor Fully Offline)
 
 ```mermaid
 sequenceDiagram
@@ -132,11 +111,9 @@ sequenceDiagram
     D->>BC: Submit usage report, claim USDC fee
 ```
 
----
+## System Requirements
 
-## 7. System Requirements
-
-### 7.1 Functional Requirements
+### Functional Requirements
 
 **Issuance:** The system must generate session tokens with a configurable TTL, ranging from minutes (high-security, short-lived access) to months (subscription-style access). Replay protection is achieved via random nonces and vendor-side nonce tracking, not per-request intent binding (which would require a new FHE derivation per API call and is impractical given current CoFHE latency).
 
@@ -150,7 +127,7 @@ sequenceDiagram
 
 **Revocation:** Vendors must be able to revoke a specific token commitment on-chain. DePIN nodes must check the revocation registry on startup and cache it locally. Revocation propagation latency is bounded by node cache refresh intervals, not by per-request chain reads.
 
-### 7.2 Non-Functional Requirements
+### Non-Functional Requirements
 
 **Privacy:** Neither the AI agent, the model provider, the DePIN node operator, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it.
 
@@ -158,12 +135,10 @@ sequenceDiagram
 
 **Latency:** Total request overhead introduced by the DePIN layer (key validation + forwarding) must be under 50ms at the 95th percentile for nodes geographically close to both the agent and the vendor. HMAC validation itself is under 1ms - network round-trip dominates.
 
-
 **Availability:** The DePIN network must tolerate individual node failures gracefully. Clients must implement automatic failover to alternate nodes. A minimum viable network requires at least 3 active nodes; production deployment targets 50+ nodes across multiple geographic regions.
 
----
 
-## 8. Out of Scope
+## Out of Scope
 
 **Client Implementation:** Developing the specific logic for how an AI agent chooses to spend its budget, selects which API to call, or decides when to request a new token. This is the responsibility of the agent framework (LangChain, AutoGPT, custom implementations).
 
