@@ -114,7 +114,7 @@ sequenceDiagram
     
     A->>BC: Purchase Access / Request Token
     BC->>BC: Verify Payment & Check SLA Rules (on-chain)
-    BC->>BC: Homomorphic MAC(Km, Payload) → Encrypted Token
+    BC->>BC: Homomorphic MAC(Master Key, Payload) → Encrypted Token
     BC->>TSN: Request re-encryption for Agent's public key
     TSN->>A: Deliver Access Token (AES-GCM, only agent can unwrap)
     
