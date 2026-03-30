@@ -18,8 +18,6 @@ The system is built on three interlocking primitives: FHE for credential confide
 
 **Payment Friction:** Existing agentic payment protocols (like x402) require multiple round-trips between agent, payment processor, and vendor before a request is served. This adds latency, complexity, and additional trusted intermediaries. For high-frequency agentic workloads - where an agent may make thousands of API calls per hour - this overhead is unacceptable.
 
-**No Cryptographic Accountability:** When an API key is shared across a team or delegated to multiple agents, there is no on-chain record of who used what, when, and how many times. Usage is tracked entirely by the vendor's internal systems, with no independent auditability. If the vendor's logs are wrong or manipulated, there is no recourse.
-
 ---
 
 ## 3. The Solution: The "Blind Courier" Model
