@@ -37,7 +37,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **Service Vendors:** Companies or individuals who provide APIs or services. They generate a master key locally, encrypt it via FHE, and deposit it on-chain once. They define pricing, rate limits, TTL windows, and compliance rules in the smart contract. After initial provisioning, vendors do not need to operate any infrastructure for token issuance - the blockchain handles it. Vendors do operate an API endpoint and they run a lightweight validation process for incoming requests.
 
-**Resource Owners (Users):** Individuals or organizations that purchase API access. They pay USDC to the smart contract and receive an Access Token bound to their wallet. They can use this token directly or delegate it to AI agents. In the future resale market, they can list unused quota for automated resale - for example, selling the remaining 40% of a monthly API subscription to other buyers without ever exposing the underlying credential.
+**Resource Owners (Users):** Individuals or organizations that purchase API access. They pay to the smart contract and receive an Access Token. They can use this token directly or delegate it to AI agents. In the future resale market, they can list unused quota for automated resale - for example, selling the remaining 40% of a monthly API subscription to other buyers without ever exposing the underlying credential.
 
 **AI Agents:** Autonomous software processes acting on behalf of users. They can purchase Access Tokens by interacting directly with smart contract, include them in HTTP request, and receive API responses. They are cryptographically blind to the credential while being able to use it.
 
