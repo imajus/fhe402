@@ -32,8 +32,6 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **AI Agents:** Autonomous software processes acting on behalf of users. They can purchase Access Tokens by interacting directly with smart contract, include them in HTTP request, and receive API responses. They are cryptographically blind to the credential while being able to use it.
 
-**DePIN Node Operators:** Independent infrastructure operators who run validator proxy nodes. They stake collateral, validate incoming Access Tokens via local HMAC recomputation, forward valid requests to vendor API endpoints, return responses to agents, and earn per-request fees. They are the decentralized replacement for a vendor-operated API gateway. They cannot read master keys or token contents - they only verify that the derived key's HMAC is valid.
-
 ## Key Features
 
 **Wallet-Bound Token Issuance:** Every derived key is cryptographically bound to the buyer's Ethereum wallet address - it is an explicit input to the HMAC function. A key derived for wallet `0xABC...` cannot be used from wallet `0xDEF...`. This replaces bearer-token semantics (anyone who has the key can use it) with identity-bound semantics (only the specified wallet can produce a valid key).
@@ -44,7 +42,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **One-Step Agentic Payments:** Replaces the multi-step "402" flow. The payment and the access proof are bundled into a single encrypted token delivery. The agent pays once, receives a session token valid for N hours or M requests, and includes it in every subsequent request header. No per-request payment, no additional round-trips.
 
-**Full On-Chain Audit Trail:** Every token issuance is recorded on-chain as a keccak256 commitment. DePIN node usage reports are aggregated off-chain and submitted in batched Merkle proofs, recording cumulative consumption per token. The result is a tamper-evident record of issuance and usage counts - independently verifiable by any party - without revealing the underlying credentials or the content of individual requests.
+**Full On-Chain Audit Trail:** Every token issuance is recorded on-chain as a keccak256 commitment. Usage reports are aggregated off-chain and submitted in batched Merkle proofs, recording cumulative consumption per token. The result is a tamper-evident record of issuance and usage counts - independently verifiable by any party - without revealing the underlying credentials or the content of individual requests.
 
 ## High-Level Workflow
 
@@ -71,16 +69,13 @@ Vendor Server (PoC - online):
 AI Agent:
   Receive dk
   Include in Authorization: Bearer header on every API request
-  Send request to any DePIN proxy node
+  Send request to vendor API
 
-DePIN Node:
-  Receive request + dk
+Vendor:
   Recompute HMAC locally to validate (offline, <1ms)
   Check expiry timestamp
   Check nonce against seen-nonce set
-  If valid: forward to vendor API endpoint
-  Receive response, return to agent
-  Submit usage report to chain, earn USDC fee
+  If valid: serve response to agent
 ```
 
 ### Target Flow (Full Architecture - Vendor Fully Offline)
@@ -91,24 +86,19 @@ sequenceDiagram
     participant BC as Blockchain (Fhenix/CoFHE)
     participant TSN as Threshold Network
     participant A as AI Agent
-    participant D as DePIN Node
-    
     V->>BC: Provision Master Key & Set SLA Rules
     Note over BC: Master Key stored in Shared Private State (FHE)
-    
+
     A->>BC: Purchase Access / Request Token
     BC->>BC: Verify Payment & Check SLA Rules (on-chain)
     BC-->>V: Emit KeyIssued event
-    
+
     V->>V: Compute dk = HMAC(Master Key, Payload) (off-chain)
     V->>A: Deliver Access Token (dk)
-    
-    A->>D: API Request + Access Token
-    D->>D: Local HMAC validation (offline)
-    D->>V: Forward valid request to vendor API
-    V->>D: Service response
-    D->>A: Response returned
-    D->>BC: Submit usage report, claim USDC fee
+
+    A->>V: API Request + Access Token
+    V->>V: Local HMAC validation (offline)
+    V->>A: Response returned
 ```
 
 ## System Requirements
@@ -123,19 +113,15 @@ sequenceDiagram
 
 **Vendor Autonomy:** Vendors must be able to validate tokens off-chain instantly without waiting for blockchain confirmations for every request. The validation is a local cryptographic operation - HMAC recomputation - that requires only the cached master key and takes under 1 millisecond. No RPC call, no network dependency, no single point of failure.
 
-**DePIN Node Operation:** Any party must be able to join the validator network by staking the minimum collateral amount and running the open-source node software. Node selection by clients must be permissionless - clients can choose nodes by latency, stake weight, or random selection. Nodes must be slashable for provable misbehavior via on-chain fraud proofs.
-
-**Revocation:** Vendors must be able to revoke a specific token commitment on-chain. DePIN nodes must check the revocation registry on startup and cache it locally. Revocation propagation latency is bounded by node cache refresh intervals, not by per-request chain reads.
+**Revocation:** Vendors must be able to revoke a specific token commitment on-chain.
 
 ### Non-Functional Requirements
 
-**Privacy:** Neither the AI agent, the model provider, the DePIN node operator, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it.
+**Privacy:** Neither the AI agent, the model provider, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it.
 
-**Scalability:** Token issuance in the target architecture is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests. In the PoC, issuance is handled by the vendor server. DePIN node validation is stateless and horizontally scalable - adding more nodes linearly increases network throughput.
+**Scalability:** Token issuance in the target architecture is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests. In the PoC, issuance is handled by the vendor server.
 
-**Latency:** Total request overhead introduced by the DePIN layer (key validation + forwarding) must be under 50ms at the 95th percentile for nodes geographically close to both the agent and the vendor. HMAC validation itself is under 1ms - network round-trip dominates.
-
-**Availability:** The DePIN network must tolerate individual node failures gracefully. Clients must implement automatic failover to alternate nodes. A minimum viable network requires at least 3 active nodes; production deployment targets 50+ nodes across multiple geographic regions.
+**Latency:** HMAC validation is under 1ms. Total request overhead is dominated by network round-trip.
 
 
 ## Out of Scope
@@ -144,7 +130,7 @@ sequenceDiagram
 
 **Key Recovery:** Providing a "lost password" service for master keys. If a vendor loses $K_m$, there is no recovery mechanism - this is intentional. The security model requires that $K_m$ never be stored anywhere except the vendor's own secure systems. Key recovery would require a trusted third party, reintroducing the centralization this system eliminates.
 
-**Direct API Proxying (in base spec):** The system provides credentials, it does not act as a content-aware middleman for API data traffic. DePIN nodes forward packets blindly - they do not inspect, filter, or transform request or response bodies. Content-aware features (rate limiting by request complexity, response caching) are out of scope for the base protocol and may be built as optional node extensions.
+**Direct API Proxying:** The system provides credentials, it does not act as a content-aware middleman for API data traffic. DePIN nodes forward packets blindly -- they do not inspect, filter, or transform request or response bodies. Content-aware features (rate limiting by request complexity, response caching) are out of scope for the base protocol and may be built as optional node extensions.
 
 **Agent Decision Logic:** What an agent does with the API response is entirely outside this system's scope. The system guarantees that the agent can call the API securely. What it does with the result is the agent framework's concern.
 
