@@ -159,7 +159,6 @@ sequenceDiagram
 
 **Latency:** Total request overhead introduced by the DePIN layer (key validation + forwarding) must be under 50ms at the 95th percentile for nodes geographically close to both the agent and the vendor. HMAC validation itself is under 1ms - network round-trip dominates.
 
-**Durability:** The FHE layer's lattice-based cryptography is resistant to future quantum computing threats for the confidentiality of $K_m$. The broader system - Ethereum ECDSA signatures, EigenLayer staking - inherits the quantum-resistance posture of the underlying L1/L2 infrastructure and is not post-quantum secure. A full post-quantum upgrade path exists via CRYSTALS-Dilithium signature replacement.
 
 **Availability:** The DePIN network must tolerate individual node failures gracefully. Clients must implement automatic failover to alternate nodes. A minimum viable network requires at least 3 active nodes; production deployment targets 50+ nodes across multiple geographic regions.
 
