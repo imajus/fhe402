@@ -153,7 +153,7 @@ sequenceDiagram
 
 ### 7.2 Non-Functional Requirements
 
-**Privacy:** Neither the AI agent, the model provider, the DePIN node operator, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it. DePIN nodes receive the derived key for HMAC validation but never see $K_m$. Blockchain observers see only keccak256 commitments.
+**Privacy:** Neither the AI agent, the model provider, the DePIN node operator, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it.
 
 **Scalability:** Token issuance in the target architecture is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests. In the PoC, issuance is handled by the vendor server. DePIN node validation is stateless and horizontally scalable - adding more nodes linearly increases network throughput.
 
