@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import {Test} from "forge-std/Test.sol";
 import {CoFheTest} from "@cofhe/mock-contracts/CoFheTest.sol";
-import {FHE, InEuint128, euint128} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
+import {InEuint128, euint128} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 import {EncryptedCounter} from "../src/EncryptedCounter.sol";
 
 contract EncryptedCounterTest is Test, CoFheTest {
