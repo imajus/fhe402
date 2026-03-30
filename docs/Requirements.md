@@ -135,7 +135,7 @@ sequenceDiagram
 
 **Compliance Gating:** The system must support compound identity checks on encrypted data before issuing a token. Examples include age verification (buyer proves they are over 18 via Self Protocol without revealing birthdate), jurisdiction checks (buyer proves they are not in a sanctioned country), and accreditation checks (buyer proves institutional investor status). All checks must execute on encrypted inputs - no plaintext identity data touches the chain.
 
-**Interoperability:** The Access Token must be deliverable via standard HTTP headers (`Authorization: Bearer <token>`). Vendor validation must require no custom client libraries beyond a standard AES-GCM decryption call and an HMAC recompute. The validation spec must be publishable as an open standard so any vendor can implement it independently.
+**Interoperability:** The Access Token must be deliverable via standard HTTP protocol. The validation spec for vendor must be publishable as an open standard so any vendor can implement it independently.
 
 **Vendor Autonomy:** Vendors must be able to validate tokens off-chain instantly without waiting for blockchain confirmations for every request. The validation is a local cryptographic operation - HMAC recomputation - that requires only the cached master key and takes under 1 millisecond. No RPC call, no network dependency, no single point of failure.
 
