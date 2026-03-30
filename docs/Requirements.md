@@ -6,7 +6,8 @@
 
 The **Agentic Secret Management (ASM)** system is a decentralized infrastructure designed to allow AI agents to use sensitive API credentials and perform paid actions without ever "seeing" the actual secrets. By leveraging **shared private state** on-chain via Fully Homomorphic Encryption (FHE), the system enables a secondary market for API access, programmable service-level agreements (SLAs), and cryptographically secure "blind" execution.
 
-The system is built on two interlocking primitives: FHE for credential confidentiality and HMAC for offline token validation.
+The system is built on two interlocking primitives: FHE for credential confidentiality and HMAC for offline token validation. Together these replace the trust assumptions of traditional API key management - vendor 
+honesty and centralized enforcement - with cryptographic guarantees around credential usage and request validity. Operational guarantees such as uptime and SLA enforcement are outside the scope of this system.
 
 ---
 
@@ -29,7 +30,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 - An AI agent can call a paid API without the agent operator knowing which API key was used
 - A vendor can issue tokens to agents they have never interacted with directly, automatically, 24/7
 - An organization can delegate API access to agents without sharing credentials with the agent developer
-- Usage is auditable on-chain without exposing the underlying key
+- Token issuance and usage counts are recorded on-chain, enabling independent verification that access was granted and how many times a token was consumed - without exposing the underlying key
 
 ---
 
