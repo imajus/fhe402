@@ -118,7 +118,7 @@ sequenceDiagram
     BC->>TSN: Request re-encryption for Agent's public key
     TSN->>A: Deliver Access Token (AES-GCM, only agent can unwrap)
     
-    A->>D: API Request + Access Token (Authorization header)
+    A->>D: API Request + Access Token
     D->>D: Local HMAC validation (offline)
     D->>V: Forward valid request to vendor API
     V->>D: Service response
