@@ -1,14 +1,10 @@
-## Abstract
-
-The API key management industry operates on a fundamentally broken trust model. Vendors issue static bearer tokens with no cryptographic enforcement of access rules. Rate limits, expiry, and usage constraints live in vendor databases, enforced by vendor policy - not mathematics. A single server compromise exposes every issued credential. This paper introduces **KeyForge**, a decentralized API access marketplace that replaces vendor trust with cryptographic guarantees. Access tokens are derived via HMAC-SHA256 from a master key protected by Fully Homomorphic Encryption on-chain, and bound cryptographically to the buyer's wallet identity. The result is an API access layer where rules are enforced by math and master keys are unreadable by anyone including the vendor's own infrastructure.
-
 ## Architectural Overview
 
-The system follows the **"Glue and Coprocessor"** model, where the Ethereum-compatible Layer 2 (L2) handles business logic and state management ("glue"), while the **CoFHE (Collaborative FHE) Coprocessor** handles intensive encrypted computations.
+The system follows the **"Glue and Coprocessor"** model, where the EVM-compatible blockchain handles business logic and state management ("glue"), while the **CoFHE (Collaborative FHE) Coprocessor** handles intensive encrypted computations.
 
 ### System Components
 
-**On-Chain Layer (Fhenix L2):** Built on the **Arbitrum Nitro stack**, it manages encrypted state using the `FHE.sol` library. Handles vendor registration, buyer payments in USDC, token commitment storage via keccak256, and rate limit enforcement at issuance time.
+**On-Chain Layer (Fhenix):** Manages encrypted state using the `FHE.sol` library. Handles vendor registration, buyer payments in USDC, token commitment storage via keccak256, and rate limit enforcement at issuance time.
 
 **CoFHE Coprocessor:** A specialized, stateless engine that offloads heavy FHE tasks from the main execution thread. Published benchmarks report significant throughput improvements for simple FHE operations (addition, comparison); complex operations like homomorphic MAC computation will have higher latency.
 
@@ -20,7 +16,7 @@ The system follows the **"Glue and Coprocessor"** model, where the Ethereum-comp
 
 ### Comparison with Existing Solutions
 
-| Property | Traditional API keys | OAuth 2.0 | KeyForge |
+| Property | Traditional API keys | OAuth 2.0 | FHE402 |
 |---|---|---|---|
 | Rules enforcement | Vendor database | Auth server | Cryptography |
 | Master secret location | Vendor server | Auth server | FHE on-chain |

@@ -71,7 +71,7 @@ Access tokens are derived via HMAC-SHA256 from a master key $K_m$ protected by F
 Homomorphic Encryption (FHE) on-chain, validated offline by a Decentralized Physical
 Infrastructure Network (DePIN) of proxy nodes, and bound cryptographically to the buyer's
 wallet identity. Three core contributions are presented: (1) on-chain FHE storage of
-$K_m$ using \texttt{euint256} with access-control-list (ACL) gating on Fhenix L2, (2) the
+$K_m$ using \texttt{euint256} with access-control-list (ACL) gating on Fhenix, (2) the
 Blind Courier Protocol for cryptographically blind credential handling by AI agents, and (3)
 a DePIN validation layer that eliminates single points of failure in request forwarding.
 
@@ -151,7 +151,7 @@ theoretical foundation for threshold schemes; FHE-402 adopts an $N/2$-of-$N$ thr
 model for the TSN.
 
 \subsection{FHE in Production Systems}
-Zama's TFHE library \cite{zama_tfhe} and the Fhenix L2 \cite{fhenix} represent the
+Zama's TFHE library \cite{zama_tfhe} and Fhenix \cite{fhenix} represent the
 current state of the art in production-grade FHE for blockchain applications. The CoFHE
 coprocessor architecture \cite{cofhe} offloads intensive FHE computation from the main
 execution thread, enabling practical latencies for simple operations (addition, comparison)
@@ -182,18 +182,18 @@ proof into a single token delivery.
 
 \subsection{The Glue and Coprocessor Model}
 
-FHE-402 follows the ``Glue and Coprocessor'' architecture. The Ethereum-compatible
-Layer 2 (Fhenix L2) handles business logic and state management --- the ``glue'' ---
+FHE-402 follows the ``Glue and Coprocessor'' architecture. The EVM-compatible blockchain
+(Fhenix) handles business logic and state management --- the ``glue'' ---
 while the CoFHE Coprocessor handles intensive encrypted computations. This separation
 ensures that FHE operations do not block normal contract execution and enables
 horizontal scaling of the computation layer independently of the consensus layer.
 
 \subsection{System Components}
 
-\textbf{On-Chain Layer (Fhenix L2):} Built on the Arbitrum Nitro stack, the on-chain
-layer manages encrypted state using the \texttt{FHE.sol} library. It handles vendor
-registration, buyer payments in USDC, token commitment storage via keccak256, rate
-limit enforcement at issuance time, and the vendor marketplace registry.
+\textbf{On-Chain Layer (Fhenix):} The on-chain layer manages encrypted state using the
+\texttt{FHE.sol} library. It handles vendor registration, buyer payments in USDC,
+token commitment storage via keccak256, rate limit enforcement at issuance time, and
+the vendor marketplace registry.
 
 \textbf{CoFHE Coprocessor:} A specialized, stateless engine that offloads heavy FHE
 tasks from the main execution thread. Published benchmarks report significant throughput
@@ -259,7 +259,7 @@ DePIN proxy layer.
 \begin{scope}[on background layer]
   \node[draw=nodegray!42, fill=nodegray!7, rounded corners=6pt,
         fit=(registry)(fhestore), inner sep=8pt,
-        label=above:{\small\textbf{Fhenix L2 --- Blockchain}}]
+        label=above:{\small\textbf{Fhenix --- Blockchain}}]
         (chain) {};
 \end{scope}
 
@@ -468,7 +468,7 @@ participating actors and message types.
 
 %% Actor x-positions (2.6cm spacing -> 5*2.6 = 13cm span)
 \def\xA{0}      % Vendor Server
-\def\xB{2.6}    % Fhenix L2
+\def\xB{2.6}    % Fhenix
 \def\xC{5.2}    % TSN
 \def\xD{7.8}    % Buyer / Agent
 \def\xE{10.4}   % DePIN Node
@@ -476,7 +476,7 @@ participating actors and message types.
 
 %% Actor header boxes at y=0
 \node[actorbox=nodeteal]   at (\xA,0) {\textbf{Vendor}\\Server};
-\node[actorbox=nodeblue]   at (\xB,0) {\textbf{Fhenix L2}\\Blockchain};
+\node[actorbox=nodeblue]   at (\xB,0) {\textbf{Fhenix}\\Blockchain};
 \node[actorbox=nodepurple] at (\xC,0) {\textbf{TSN}\\$N/2$-of-$N$};
 \node[actorbox=nodeblue]   at (\xD,0) {\textbf{Buyer}\\/ Agent};
 \node[actorbox=nodeorange] at (\xE,0) {\textbf{DePIN}\\Node};
@@ -887,7 +887,7 @@ is unaffected.
 \begin{enumerate}
 \item Vendor's local key custody system is not compromised.
 \item Fewer than $N/2$ TSN nodes collude at any time.
-\item The Fhenix L2 consensus mechanism is not captured.
+\item The Fhenix blockchain consensus mechanism is not captured.
 \item EigenLayer staking provides sufficient economic deterrence for node misbehavior.
 \item TFHE security reduces to the hardness of RLWE (Ring Learning With Errors).
 \end{enumerate}
@@ -1137,7 +1137,7 @@ enforcement, and agent credential exposure. The three core contributions --- FHE
 master key storage, HMAC-SHA256 wallet-bound key derivation, and DePIN proxy validation ---
 are independently meaningful and composable.
 
-The PoC implementation is fully buildable with current tooling on Fhenix L2. The full
+The PoC implementation is fully buildable with current tooling on Fhenix. The full
 target architecture, in which vendors require no online infrastructure after initial
 provisioning, awaits resolution of the FHE-friendly MAC primitive selection problem.
 This represents a genuine research gap, not an engineering challenge, and is clearly
