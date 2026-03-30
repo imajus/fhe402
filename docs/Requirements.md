@@ -109,7 +109,7 @@ sequenceDiagram
     participant A as AI Agent
     participant D as DePIN Node
     
-    V->>BC: Provision Master Key (encrypted) & Set SLA Rules
+    V->>BC: Provision Master Key & Set SLA Rules
     Note over BC: Km stored in euint256 - unreadable by anyone
     
     A->>BC: Purchase Access (USDC) / Request Token
