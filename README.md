@@ -20,11 +20,11 @@ Unlike x402, which requires multiple round-trips per request for discovery, paym
 
 ### High Level Overview
 
-<img width="768" alt="Untitled-2026-03-30-2250" src="https://github.com/user-attachments/assets/9bcab120-9d34-49f7-b17a-e4e1c29d40ba" />
+<img width="650" alt="Untitled-2026-03-30-2250" src="https://github.com/user-attachments/assets/9bcab120-9d34-49f7-b17a-e4e1c29d40ba" />
 
 ### Data flow diagram
 
-<img width="2030" height="1351" alt="Untitled-2026-03-30-2250-2" src="https://github.com/user-attachments/assets/9574e2da-0d45-4119-86b1-9c96015b6ed0" />
+<img alt="Untitled-2026-03-30-2250-2" src="https://github.com/user-attachments/assets/9574e2da-0d45-4119-86b1-9c96015b6ed0" />
 
 ## Challenges we ran into
 
