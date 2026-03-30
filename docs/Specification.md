@@ -1,6 +1,6 @@
 ## Abstract
 
-The API key management industry operates on a fundamentally broken trust model. Vendors issue static bearer tokens with no cryptographic enforcement of access rules. Rate limits, expiry, and usage constraints live in vendor databases, enforced by vendor policy - not mathematics. A single server compromise exposes every issued credential. This paper introduces **KeyForge**, a decentralized API access marketplace that replaces vendor trust with cryptographic guarantees. Access tokens are derived via HMAC-SHA256 from a master key protected by Fully Homomorphic Encryption on-chain, validated offline by a decentralized network of proxy nodes (DePIN), and bound cryptographically to the buyer's wallet identity. The result is an API access layer where rules are enforced by math, master keys are unreadable by anyone including the vendor's own infrastructure, and no single point of failure exists in the validation path.
+The API key management industry operates on a fundamentally broken trust model. Vendors issue static bearer tokens with no cryptographic enforcement of access rules. Rate limits, expiry, and usage constraints live in vendor databases, enforced by vendor policy - not mathematics. A single server compromise exposes every issued credential. This paper introduces **KeyForge**, a decentralized API access marketplace that replaces vendor trust with cryptographic guarantees. Access tokens are derived via HMAC-SHA256 from a master key protected by Fully Homomorphic Encryption on-chain, and bound cryptographically to the buyer's wallet identity. The result is an API access layer where rules are enforced by math and master keys are unreadable by anyone including the vendor's own infrastructure.
 
 ## Architectural Overview
 
@@ -14,9 +14,7 @@ The system follows the **"Glue and Coprocessor"** model, where the Ethereum-comp
 
 **Threshold Services Network (TSN):** A decentralized network of nodes using **Threshold FHE Decryption** and **MPC Rounding** to securely re-encrypt or reveal data. Operates on an N/2-of-N trust model - no single node can decrypt unilaterally, preventing insider attacks.
 
-**DePIN Proxy Network:** A permissionless network of independently operated validator nodes that sit between API buyers and vendor endpoints. Nodes stake tokens for economic accountability, validate derived keys locally via HMAC recomputation (no blockchain call required), forward valid requests to the vendor's real API, and earn USDC per validated request. This layer eliminates the vendor proxy as a single point of failure and replaces it with a decentralized, economically incentivized network. Anyone can join by running the node software and staking the minimum required collateral.
-
-**Security Layer:** Secured via **EigenLayer restaking**, providing economic security for data availability and threshold operations. Nodes that misbehave - dropping requests, faking validations, colluding to expose keys - are slashed, losing their staked collateral.
+**Security Layer:** Secured via **EigenLayer restaking**, providing economic security for data availability and threshold operations.
 
 **Vendor Marketplace:** An on-chain registry where vendors list their APIs, pricing tiers, and access rules. Buyers discover vendors, compare offerings, and purchase access in a single transaction. The marketplace is non-custodial - funds flow directly from buyer to smart contract, with automatic distribution to vendors and nodes.
 
@@ -28,7 +26,7 @@ The system follows the **"Glue and Coprocessor"** model, where the Ethereum-comp
 | Master secret location | Vendor server | Auth server | FHE on-chain |
 | Key binding | None (bearer) | User session | Wallet identity |
 | Validation | Network call to vendor | Network call to auth server | Local HMAC (offline) |
-| Single point of failure | Vendor server | Auth server | None (DePIN) |
+| Single point of failure | Vendor server | Auth server | None |
 | Auditable issuance | No | No | On-chain commitments |
 | Post-quantum confidentiality | No | No | Yes (lattice-based FHE) |
 
@@ -44,7 +42,6 @@ Threats addressed:
 - **Credential theft in transit:** Key delivery via TSN re-encryption means the derived key is wrapped specifically for the buyer's public key. Only the buyer's private key can unwrap it.
 - **Replay attacks:** Random nonces in every token prevent replaying a captured valid request. The vendor maintains a seen-nonce set evicted after TTL expiry.
 - **Over-issuance:** On-chain rate limit enforcement at issuance time prevents a compromised vendor server from issuing unlimited tokens.
-- **Proxy node collusion:** EigenLayer staking and N/2-of-N threshold trust means a majority of nodes must collude to break security - economically irrational given slashing.
 - **Threats not addressed:** Compromise of the vendor's own machine (they hold $K_m$). Compromise of more than N/2 TSN nodes simultaneously. Quantum attacks on the ECDSA layer (EigenLayer, Ethereum itself).
 
 ## Cryptographic Stack
@@ -65,7 +62,7 @@ This runs off-chain on the vendor's server (PoC) or on-chain via homomorphic MAC
 
 $$\text{commitment} = \text{keccak256}(dk)$$
 
-This commitment proves a key was legitimately issued without revealing the key. It also anchors the on-chain use counter - the contract increments a counter keyed by commitment on each validated request report from DePIN nodes.
+This commitment proves a key was legitimately issued without revealing the key. It also anchors the on-chain use counter - the contract increments a counter keyed by commitment on each validated request.
 
 **TFHE & BFV:** The core FHE schemes for encrypted integers (`euint8`–`euint256`) and booleans (`ebool`). TFHE operates on binary circuits and is optimized for gate-by-gate operations. BFV operates on integer arithmetic and is more efficient for polynomial computations. The master key is stored as `euint256`, providing a 256-bit encrypted integer - equivalent security to AES-256.
 
@@ -91,12 +88,10 @@ Vendor → server detects event
          decrypts Km locally
          computes dk = HMAC-SHA256(Km, payload)
          sends dk to buyer over encrypted channel
-Buyer  → calls DePIN proxy node with dk in Authorization header
-Node   → recomputes HMAC locally, checks expiry
+Buyer  → calls vendor API with dk in Authorization header
+Vendor → recomputes HMAC locally, checks expiry
          increments on-chain use counter if N-uses model
-         forwards request to vendor's real API endpoint
-         receives response, returns to buyer
-         earns USDC fee from smart contract
+         serves response to buyer
 ```
 
 ### Target Flow (Vendor Offline - Full Architecture)
@@ -108,7 +103,7 @@ sequenceDiagram
     participant CP as CoFHE Coprocessor
     participant TSN as Threshold Network
     participant A as AI Agent / Buyer
-    participant D as DePIN Node
+
 
     Note over V, BC: Phase I: Provisioning (once, vendor goes offline after)
     V->>BC: Provision Master Key (Km) & Rules (SLA)
@@ -122,12 +117,10 @@ sequenceDiagram
     BC->>TSN: Request Re-encryption for Buyer PK
     TSN->>A: Deliver Access Key (AES-GCM wrapped for buyer only)
     
-    Note over A, D: Phase IV: DePIN Execution
-    A->>D: API Request + Access Key
-    D->>D: Local HMAC Validation (offline)
-    D->>V: Forward to vendor real API
-    V->>D: Response
-    D->>A: Response + earn USDC fee
+    Note over A, V: Phase IV: API Execution
+    A->>V: API Request + Access Key
+    V->>V: Local HMAC Validation (offline)
+    V->>A: Response
 ```
 
 ## On-Chain Implementation (Solidity)
@@ -136,11 +129,9 @@ sequenceDiagram
 
 * `mapping(address => euint256) private masterKeys`: Stores the Vendor's 256-bit master secret in encrypted form. Using `euint256` ensures standard cryptographic key lengths (AES-256, Ed25519) and adequate post-quantum security margins.
 
-* `mapping(bytes32 => uint256) private usageCounts`: Tracks per-commitment usage. Keyed by keccak256(derived_key). DePIN nodes report usage periodically; contract enforces coarse limits.
+* `mapping(bytes32 => uint256) private usageCounts`: Tracks per-commitment usage. Keyed by keccak256(derived_key). Contract enforces coarse limits.
 
 * `mapping(uint256 => bool) private tokenStatus`: Tracks the validity of issued tokens. Token validity (valid/revoked) is not sensitive data - a plaintext mapping with standard access control avoids unnecessary CoFHE overhead.
-
-* `mapping(address => uint256) private nodeStakes`: Records staked collateral per DePIN node. Used for slashing on provable misbehavior.
 
 ### Homomorphic Token Logic
 
@@ -148,24 +139,6 @@ The contract utilizes `FHE.select()` and `FHE.mul()` to construct the token payl
 * **Input:** User Identity (wallet address), Expiry (TTL), Nonce.
 * **Operation:** $Token = \text{TFHE-MAC}(K_m, \text{Payload})$ - the specific MAC construction must use TFHE-native operations (see §2.1).
 * **Output:** An encrypted ciphertext passed to the TSN for re-encryption.
-
-### 4.3 DePIN Node Registration
-
-```solidity
-function registerNode(uint256 stakeAmount) external {
-    require(stakeAmount >= MIN_STAKE, "insufficient stake");
-    usdc.transferFrom(msg.sender, address(this), stakeAmount);
-    nodeStakes[msg.sender] = stakeAmount;
-    emit NodeRegistered(msg.sender, stakeAmount);
-}
-
-function slashNode(address node, bytes calldata proof) external onlyGovernance {
-    // verify fraud proof, burn stake
-    uint256 stake = nodeStakes[node];
-    nodeStakes[node] = 0;
-    emit NodeSlashed(node, stake);
-}
-```
 
 ## Vendor-Side Validation (Off-Chain)
 
@@ -189,34 +162,14 @@ A time-bucketed bloom filter is a practical implementation: maintain two bloom f
 
 Rate limits defined on-chain (§4.2) are enforced through a **hybrid model**:
 * **At issuance (on-chain):** The contract enforces coarse-grained limits by tracking total tokens issued per subscription period. This prevents over-issuance.
-* **At validation (off-chain):** The vendor and DePIN nodes track per-token usage counts locally. Nodes periodically report usage back on-chain for reconciliation. Reports are aggregated off-chain using a simple merkle rollup and submitted in batches to minimize gas costs.
+* **At validation (off-chain):** The vendor tracks per-token usage counts locally. Usage is periodically reported back on-chain for reconciliation.
 * Rate limits are **advisory at the per-request level** and **enforced at the issuance level**. This is a pragmatic trade-off: on-chain enforcement per API call is infeasible, but issuance-time gating bounds total access.
-
-## DePIN Economics
-
-### Fee Distribution
-
-Every API request processed by the network triggers a micro-payment. For a request priced at $P$ USDC:
-
-| Recipient | Share | Rationale |
-|---|---|---|
-| Vendor | 80% | API service provider |
-| DePIN node | 15% | Validation + forwarding |
-| Protocol treasury | 5% | Development, governance |
-
-Payments are batched - nodes submit signed usage reports periodically, the contract verifies and distributes. This avoids per-request gas costs.
-
-### Node Incentive Structure
-
-Nodes earn more by processing more requests. They compete on latency and uptime - buyers' clients select the fastest responding node. This creates natural market pressure for well-operated nodes without requiring central coordination.
-
-Slashing conditions: provable dropped requests (buyer receives no response but node claims fee), provable invalid validations (node passes a request with an invalid key), collusion with TSN nodes (detectable via cryptographic proofs).
 
 ## Security and Performance Metrics
 
 **Token Model:** Access Keys are **session tokens** with a TTL of $N$ hours. They are not bound to a specific request body, allowing reuse across multiple API calls within the validity window. This avoids the need for a new FHE derivation per request, which would be impractical given CoFHE latency.
 
-**Validation Latency:** Off-chain HMAC recomputation at a DePIN node takes under 1ms. Total added latency per request (node overhead) is dominated by network round-trip, not computation - estimated 5-20ms depending on node geography.
+**Validation Latency:** Off-chain HMAC recomputation takes under 1ms.
 
 **Throughput:** The **MPC Rounding protocol** (CCS 2025) enables significant performance improvements for the TSN's re-encryption and threshold decryption operations. Note: published benchmarks (e.g., "5,000x throughput," "20,000x faster") measure simple FHE operations (addition, comparison, threshold decryption). Homomorphic MAC computation is substantially more complex and will exhibit higher latency - real-world performance for token generation should be benchmarked independently.
 
@@ -232,6 +185,3 @@ Slashing conditions: provable dropped requests (buyer receives no response but n
 
 **Resale mechanism:** The Requirements document describes automated prorated resale of API access. The cryptographic design for homomorphic subdivision of rate limits and double-spend prevention is deferred to a future specification version.
 
-**DePIN node selection and routing:** Optimal strategies for client-side node selection (latency-based, stake-weighted, random) and their impact on network decentralization and censorship resistance.
-
-**Fraud proof completeness:** Defining a complete set of provable slashing conditions for DePIN node misbehavior, and the on-chain verification cost of each.
