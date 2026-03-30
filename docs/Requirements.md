@@ -59,7 +59,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **Automated Resale Market (Future):** Owners can "prorate" their API access. If an owner has 50% of their monthly quota left, the system allows them to sell that remaining access to an agent automatically. The cryptographic design for homomorphic rate-limit subdivision and double-spend prevention is an open problem - this feature is scoped for a future version.
 
-**Confidential Governance:** DAO treasuries or organizations can manage their service subscriptions and payments privately, hiding their operating costs from competitors. The on-chain record shows that a payment was made and a token was issued, but not which service was accessed or what rules were applied - those live in encrypted SLA state.
+**Confidential Governance:** DAO treasuries or organizations can manage service subscriptions and payments with selective privacy. While transaction metadata (e.g., sender address and target contract) is publicly visible on-chain, sensitive details such as SLA rules, access conditions, and policy logic remain hidden in encrypted on-chain state. This prevents competitors from inferring business logic or decision criteria, even though payment relationships are observable.
 
 **One-Step Agentic Payments:** Replaces the multi-step "402" flow. The payment and the access proof are bundled into a single encrypted token delivery. The agent pays once, receives a session token valid for N hours or M requests, and includes it in every subsequent request header. No per-request payment, no additional round-trips.
 
