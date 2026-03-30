@@ -84,6 +84,10 @@ This commitment proves a key was legitimately issued without revealing the key. 
 
 ## 3. Data Flow: The "Blind Courier" Protocol
 
+The analogy: a sealed envelope. A courier can carry and deliver a sealed envelope. They can prove they have it. They can hand it over. But they cannot read what's inside. The recipient (vendor) opens it and validates the contents. The courier (agent) never learns the secret.
+
+This property is enforced not by policy ("we promise not to show agents the keys") but by cryptography. The token is encrypted under the vendor's public key via the Threshold Services Network. No amount of inspection, memory reading, or model introspection allows the agent to recover the plaintext key. The math makes it impossible.
+
 ### 3.1 PoC Flow (Vendor Online)
 
 In the initial implementation, the vendor server participates in key issuance. This is fully buildable today.
