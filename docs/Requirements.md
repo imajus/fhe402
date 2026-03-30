@@ -49,7 +49,11 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 ## 5. Key Features
 
-**Programmable On-Chain SLAs:** Vendors can enforce complex rules without revealing the user's data or the vendor's internal criteria. Examples: "only issue tokens to wallets with a Self Protocol KYC proof", "only issue tokens to wallets that have held a specific NFT for more than 30 days", "reject issuance if the buyer's wallet is on the OFAC sanctions list". These checks run on encrypted identity data using FHE comparisons - the rule executes and produces a yes/no result without any private data being exposed.
+- **One-Step Agentic Payments:** Payment and access proof are bundled into a single token issuance, eliminating per-request payment overhead.(Probably usage of x402 payment protocol)
+
+- **Programmable On-Chain SLAs:** Vendors can enforce complex rules without revealing user data or internal criteria. These rules operate on encrypted inputs (e.g., attestations or on-chain data) using FHE and produce a yes/no result without exposing private data.
+
+- **Wallet-Bound Token Issuance:** Each derived key includes the buyer’s Ethereum wallet address as an input to the HMAC function. During API requests, the client must provide both the token and a valid wallet signature. The DePIN node verifies the signature to confirm wallet ownership and recomputes the HMAC to validate the token. This ensures the token cannot be used without control of the corresponding wallet, replacing bearer-token semantics with identity-bound access.
 
 **Wallet-Bound Token Issuance:** Every derived key is cryptographically bound to the buyer's Ethereum wallet address - it is an explicit input to the HMAC function. A key derived for wallet `0xABC...` cannot be used from wallet `0xDEF...`. This replaces bearer-token semantics (anyone who has the key can use it) with identity-bound semantics (only the specified wallet can produce a valid key).
 
