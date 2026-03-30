@@ -14,8 +14,6 @@ The system is built on three interlocking primitives: FHE for credential confide
 
 **Credential Leakage:** AI agents currently require plaintext secrets to call external APIs. These secrets pass through model context windows, chat logs, and memory systems - all of which are potential leak surfaces. A single model provider breach, a careless prompt export, or a training data inclusion can expose every credential an agent has ever handled. There is no cryptographic mechanism today that allows an agent to use a credential it cannot read.
 
-**The "Goldfish Bowl" Problem:** Traditional blockchains are fully transparent. Every state variable is public. This makes it impossible to store master keys, private business logic, or sensitive SLA terms on-chain without exposing them to competitors, regulators, or attackers. Existing workarounds - off-chain key management services, trusted execution environments - reintroduce centralized trust assumptions that the blockchain was supposed to eliminate.
-
 **Underutilized Assets:** Enterprise API subscriptions are purchased in bulk tiers. A company that pays for 10 million OpenAI tokens per month rarely uses exactly that amount. The unused balance expires worthless. There is no secure, trustless mechanism to resell or delegate that remaining access without sharing the underlying credential - which would violate the vendor's terms and expose the key.
 
 **Payment Friction:** Existing agentic payment protocols (like x402) require multiple round-trips between agent, payment processor, and vendor before a request is served. This adds latency, complexity, and additional trusted intermediaries. For high-frequency agentic workloads - where an agent may make thousands of API calls per hour - this overhead is unacceptable.
