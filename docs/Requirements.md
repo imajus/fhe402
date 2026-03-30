@@ -110,7 +110,7 @@ sequenceDiagram
     participant D as DePIN Node
     
     V->>BC: Provision Master Key & Set SLA Rules
-    Note over BC: Km stored in euint256 - unreadable by anyone
+    Note over BC: Master Key stored in Shared Private State
     
     A->>BC: Purchase Access (USDC) / Request Token
     BC->>BC: Verify Payment & Check SLA Rules (on-chain)
