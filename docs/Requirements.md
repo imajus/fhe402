@@ -39,7 +39,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **Resource Owners (Users):** Individuals or organizations that purchase API access. They pay USDC to the smart contract and receive an Access Token bound to their wallet. They can use this token directly or delegate it to AI agents. In the future resale market, they can list unused quota for automated resale - for example, selling the remaining 40% of a monthly API subscription to other buyers without ever exposing the underlying credential.
 
-**AI Agents:** Autonomous software processes acting on behalf of users. They receive encrypted Access Tokens, include them in HTTP Authorization headers, and receive API responses. They never see the master key. They never see the plaintext token contents. They are cryptographically blind to the credential while being able to use it. This is the core security property of the system.
+**AI Agents:** Autonomous software processes acting on behalf of users. They can purchase Access Tokens by interacting directly with smart contract, include them in HTTP request, and receive API responses. They are cryptographically blind to the credential while being able to use it.
 
 **DePIN Node Operators:** Independent infrastructure operators who run validator proxy nodes. They stake USDC collateral, validate incoming Access Tokens via local HMAC recomputation, forward valid requests to vendor API endpoints, return responses to agents, and earn per-request fees. They are the decentralized replacement for a vendor-operated API gateway. They cannot read master keys or token contents - they only verify that the derived key's HMAC is valid.
 
