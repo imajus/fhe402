@@ -22,11 +22,11 @@ The FHE layer of the ASM protocol utilizes lattice-based cryptography, which is 
 
 **secp256k1 (ECDSA):** Used for vendor registration and buyer wallet binding. The vendor's Ethereum wallet signs the registration transaction. The buyer's wallet address is embedded in the derived key's input payload, binding the key to a specific identity. Standard Ethereum tooling - no custom implementation required.
 
-**HMAC-SHA256:** The key derivation primitive for the current PoC implementation. Given the master key $K_m$ and a structured payload containing the buyer's wallet address, a nonce, maximum use count, and expiry timestamp, produces a deterministic derived key:
+**HMAC-SHA256:** The key derivation primitive. Given the master key $K_m$ and a structured payload containing the buyer's wallet address, a nonce, maximum use count, and expiry timestamp, produces a deterministic derived key:
 
 $$dk = \mathrm{HMAC\text{-}SHA256}(K_m,\ \mathrm{wallet} \| \mathrm{nonce} \| \mathrm{max\_uses} \| \mathrm{expiry})$$
 
-This runs off-chain on the vendor's server (PoC) or on-chain via homomorphic MAC (target architecture). Recomputing this at validation time requires only the cached $K_m$ - no network call, no state lookup. Validation latency is sub-millisecond.
+Token generation runs on-chain via homomorphic MAC on the CoFHE coprocessor. Recomputing this at validation time requires only the cached $K_m$ - no network call, no state lookup. Validation latency is sub-millisecond.
 
 **Keccak-256:** Used for on-chain commitment storage. The derived key itself is never stored on-chain. Instead, its hash is recorded:
 
@@ -45,53 +45,6 @@ This commitment proves a key was legitimately issued without revealing the key. 
 The analogy: The agent receives an Access Token containing structured data (identity, expiry, limits) plus an HMAC tag computed from the vendor's master key. The agent can present this token to prove permission, but cannot forge a new valid token or recover the master key from the tag. This is analogous to a notary's signature: it proves the legitimacy and authorization of a document without revealing the private key that produced it.
 
 This property is enforced not by policy ("we promise not to show agents the keys") but by cryptography. The token is encrypted under the vendor's public key via the Threshold Services Network. No amount of inspection, memory reading, or model introspection allows the agent to recover the plaintext key. The math makes it impossible.
-
-### PoC Flow (Vendor Online)
-
-In the initial implementation, the vendor server participates in key issuance. This is fully buildable today.
-
-```
-Vendor → uploads FHE-encrypted Km to blockchain (once)
-Buyer  → pays USDC to smart contract
-         contract emits KeyIssued(wallet, nonce, max_uses, expiry)
-Vendor → server detects event
-         decrypts Km locally
-         computes dk = HMAC-SHA256(Km, payload)
-         sends dk to buyer over encrypted channel
-Buyer  → calls vendor API with dk in Authorization header
-Vendor → recomputes HMAC locally, checks expiry
-         increments on-chain use counter if N-uses model
-         serves response to buyer
-```
-
-### Target Flow (Vendor Offline - Full Architecture)
-
-```mermaid
-sequenceDiagram
-    participant V as Vendor Backend
-    participant BC as Fhenix (fhEVM)
-    participant CP as CoFHE Coprocessor
-    participant TSN as Threshold Network
-    participant A as AI Agent / Buyer
-
-
-    Note over V, BC: Phase I: Provisioning (once, vendor goes offline after)
-    V->>BC: Provision Master Key (Km) & Rules (SLA)
-    
-    Note over A, CP: Phase II: Token Generation (fully on-chain, no vendor needed)
-    A->>BC: Trigger Token Purchase (USDC)
-    BC->>CP: Request Homomorphic MAC(Km, Payload)
-    CP->>BC: Return Encrypted Token Blob
-    
-    Note over BC, TSN: Phase III: Re-encryption (trustless key delivery)
-    BC->>TSN: Request Re-encryption for Buyer PK
-    TSN->>A: Deliver Access Key (AES-GCM wrapped for buyer only)
-    
-    Note over A, V: Phase IV: API Execution
-    A->>V: API Request + Access Key
-    V->>V: Local HMAC Validation (offline)
-    V->>A: Response
-```
 
 ## On-Chain Implementation (Solidity)
 

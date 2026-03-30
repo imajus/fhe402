@@ -85,11 +85,9 @@ sequenceDiagram
     Note over BC: Master Key stored in Shared Private State (FHE)
 
     A->>BC: Purchase Access / Request Token
-    BC->>BC: Verify Payment & Check SLA Rules (on-chain)
-    BC-->>V: Emit KeyIssued event
-
-    V->>V: Compute dk = HMAC(Master Key, Payload) (off-chain)
-    V->>A: Deliver Access Token (dk)
+    BC->>BC: Verify Payment & Compute Homomorphic MAC
+    BC->>TSN: Request Re-encryption for Buyer PK
+    TSN->>A: Deliver Access Token (wrapped for buyer)
 
     A->>V: API Request + Access Token
     V->>V: Local HMAC validation (offline)
@@ -114,7 +112,7 @@ sequenceDiagram
 
 **Privacy:** Neither the AI agent, the model provider, nor any blockchain observer should be able to see the Master Key or the contents of the Access Token. The agent receives a token encrypted for the vendor - it can forward it but cannot read it.
 
-**Scalability:** Token issuance in the target architecture is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests. In the PoC, issuance is handled by the vendor server.
+**Scalability:** Token issuance is handled by the CoFHE off-chain coprocessor to ensure the network can handle high-frequency agentic requests.
 
 **Latency:** HMAC validation is under 1ms. Total request overhead is dominated by network round-trip.
 

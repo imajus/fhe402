@@ -78,9 +78,8 @@ a DePIN validation layer that eliminates single points of failure in request for
 The system is post-quantum secure for the confidentiality of $K_m$ via lattice-based
 TFHE, while the broader Ethereum infrastructure is not. Three open research questions are
 identified and honestly characterized: FHE-friendly MAC primitive selection, symmetric
-wrapping performance, and homomorphic rate-limit subdivision. The PoC implementation is
-fully buildable with current tooling; the full vendor-offline architecture awaits resolution
-of the MAC primitive problem.
+wrapping performance, and homomorphic rate-limit subdivision. The vendor-offline architecture
+awaits resolution of the MAC primitive problem.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -360,8 +359,8 @@ input to the HMAC derivation function, binding every derived key to a specific o
 identity. Standard Ethereum tooling; no custom implementation required.
 
 \subsection{HMAC-SHA256 --- Key Derivation}
-The key derivation primitive for the PoC implementation. Given master key $K_m$ and a
-structured payload, the derived key is computed as:
+The key derivation primitive. Given master key $K_m$ and a structured payload, the
+derived key is computed as:
 
 \begin{equation}
 dk = \mathrm{HMAC\text{-}SHA256}(K_m,\ W \| N \| M \| E)
@@ -371,7 +370,8 @@ dk = \mathrm{HMAC\text{-}SHA256}(K_m,\ W \| N \| M \| E)
 where $W$ is the buyer's wallet address, $N$ is a cryptographically random nonce,
 $M$ is the maximum use count, and $E$ is the expiry timestamp. The derived key is
 deterministic: given identical inputs, the same $dk$ is produced. Inversion is
-computationally infeasible: possession of $dk$ reveals nothing about $K_m$. Validation
+computationally infeasible: possession of $dk$ reveals nothing about $K_m$. Token
+generation runs on-chain via homomorphic MAC on the CoFHE coprocessor. Validation
 at a DePIN node requires only the locally cached $K_m$; no network call is required.
 Validation latency is sub-millisecond.
 
@@ -500,10 +500,8 @@ participating actors and message types.
   node[steplbl,above,midway]{USDC payment};
 \draw[msg] (\xB,-3.0) to[out=15,in=-15,looseness=5] (\xB,-3.5);
 \node[steplbl,right] at (\xB+0.25,-3.25) {verify payment + compliance};
-\draw[msg] (\xB,-3.9) -- (\xA,-3.9)
-  node[steplbl,above,midway]{\texttt{KeyIssued} event};
-\draw[emsg] (\xA,-4.35) -- (\xB,-4.35)
-  node[steplbl,above,midway]{$c=\mathrm{keccak256}(dk)$\ \ (PoC: off-chain)};
+\draw[msg] (\xB,-3.9) to[out=15,in=-15,looseness=5] (\xB,-4.35);
+\node[steplbl,right] at (\xB+0.25,-4.1) {Homomorphic MAC via CoFHE};
 
 %% ---- PHASE III: Re-encryption & Delivery ----
 \node[phaselbl] at (-1.5,-4.9) {Phase III: Re-encryption \& Delivery};
@@ -532,8 +530,8 @@ participating actors and message types.
 \end{tikzpicture}
 \caption{Blind Courier Protocol: four-phase message sequence across all six participants.
 Dashed orange: encrypted payloads. Gray: plaintext messages. Looped arrows: internal
-processing (no network hop). Phase II commitment delivery is vendor-mediated in the PoC;
-the Phase 2 roadmap replaces this with trustless on-chain CoFHE computation.}
+processing (no network hop). Phase II token generation runs entirely on-chain via
+CoFHE; the vendor is offline after initial provisioning.}
 \label{fig:protocol}
 \end{figure*}
 
@@ -554,8 +552,8 @@ T_{enc} = \mathrm{TFHE\text{-}MAC}(K_m,\ W \| N \| M \| E)
 \label{eq:token}
 \end{equation}
 
-where $T_{enc}$ is an encrypted token ciphertext. In the PoC, this step is performed
-off-chain by the vendor server following detection of a \texttt{KeyIssued} event.
+where $T_{enc}$ is an encrypted token ciphertext computed entirely on-chain via the
+CoFHE coprocessor without vendor involvement.
 
 \subsection{Phase III: Re-encryption and Delivery}
 The encrypted token $T_{enc}$ is submitted to the TSN for re-encryption under the
@@ -1018,38 +1016,33 @@ specification version.
 \section{Implementation Roadmap}
 \label{sec:roadmap}
 
-\subsection{Phase 1: PoC (Buildable Today)}
-The following components are fully implementable with current tooling:
+\subsection{Phase 1: Core Infrastructure}
+The following components form the foundation of the vendor-offline architecture:
 \begin{itemize}
-\item \texttt{euint256} master key storage on Fhenix devnet with ACL-gated
+\item \texttt{euint256} master key storage on Fhenix with ACL-gated
       vendor-only decryption
-\item Off-chain HMAC-SHA256 key derivation on vendor server
 \item On-chain keccak256 commitment storage and use counter
-\item DePIN node prototype: local HMAC validation, request forwarding
+\item Homomorphic MAC token generation via CoFHE coprocessor
+\item TSN re-encryption delivery for buyer public keys
 \item USDC payment integration via Circle
-\item CLI demo: register $\rightarrow$ buy $\rightarrow$ call $\times 10 \rightarrow$
-      reject on call 11
+\item Vendor marketplace registry with SLA parameter management
 \end{itemize}
 
-\textbf{Demo target:} Three terminal windows demonstrating the full PoC flow. The
-11th-call rejection is the proof moment: visible, unambiguous, and cryptographically
-verifiable via the on-chain counter.
+\textbf{Blocked on:} FHE-friendly MAC primitive selection (Section~\ref{sec:open}).
 
-\subsection{Phase 2: TSN Integration}
-\begin{itemize}
-\item Integrate with production TSN (Lit Protocol or custom threshold network)
-\item Implement re-encryption delivery for buyer public keys
-\item Vendor becomes fully offline for token issuance
-\item Blocked on: MAC primitive selection (Section~\ref{sec:open})
-\end{itemize}
-
-\subsection{Phase 3: Full DePIN Economics}
+\subsection{Phase 2: DePIN Network}
 \begin{itemize}
 \item Production DePIN node network with EigenLayer staking
+\item Local HMAC validation and request forwarding
 \item Batched Merkle usage reporting
 \item On-chain slashing with fraud proof verification
+\end{itemize}
+
+\subsection{Phase 3: Market Features}
+\begin{itemize}
 \item Resale market (blocked on homomorphic subdivision research)
 \item Multi-chain deployment via LayerZero CCIP
+\item Advanced compliance gating with identity attestation providers
 \end{itemize}
 
 %% -------------------------------------------------------------------
@@ -1137,9 +1130,8 @@ enforcement, and agent credential exposure. The three core contributions --- FHE
 master key storage, HMAC-SHA256 wallet-bound key derivation, and DePIN proxy validation ---
 are independently meaningful and composable.
 
-The PoC implementation is fully buildable with current tooling on Fhenix. The full
-target architecture, in which vendors require no online infrastructure after initial
-provisioning, awaits resolution of the FHE-friendly MAC primitive selection problem.
+The vendor-offline architecture, in which vendors require no online infrastructure after
+initial provisioning, awaits resolution of the FHE-friendly MAC primitive selection problem.
 This represents a genuine research gap, not an engineering challenge, and is clearly
 characterized as such.
 
