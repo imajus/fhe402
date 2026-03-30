@@ -58,7 +58,7 @@ The system treats the AI agent as a **Blind Courier**. The agent receives an Acc
 
 **One-Step Agentic Payments:** Replaces the multi-step "402" flow. The payment and the access proof are bundled into a single encrypted token delivery. The agent pays once, receives a session token valid for N hours or M requests, and includes it in every subsequent request header. No per-request payment, no additional round-trips.
 
-**Full On-Chain Audit Trail:** Every token issuance is recorded on-chain as a keccak256 commitment. Every DePIN node usage report is submitted on-chain in batched merkle proofs. The result is a complete, tamper-evident usage log - auditable by any party - that never reveals the underlying credentials.
+**Full On-Chain Audit Trail:** Every token issuance is recorded on-chain as a keccak256 commitment. DePIN node usage reports are aggregated off-chain and submitted in batched Merkle proofs, recording cumulative consumption per token. The result is a tamper-evident record of issuance and usage counts - independently verifiable by any party - without revealing the underlying credentials or the content of individual requests.
 
 ---
 
